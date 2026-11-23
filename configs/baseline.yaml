@@ -1,0 +1,54 @@
+# Baseline: paper-style YOLOv1 loss on the synthetic shapes dataset.
+# Any key can be overridden from the command line, e.g. --set training.epochs=5
+experimentName: baseline
+seed: 577
+device: auto            # auto | cpu | cuda
+outputDir: results/baseline
+checkpointDir: checkpoints/baseline
+
+data:
+  dataset: synthetic    # synthetic | voc  (team still has to pick the one used for final results)
+  imageSize: 112
+  gridSize: 7
+  numWorkers: 0
+  synthetic:
+    root: data/synthetic
+    numTrain: 2000
+    numVal: 500
+    minObjects: 1
+    maxObjects: 3
+    minObjectSize: 8
+    maxObjectSize: 80
+    avoidCellCollisions: true
+    maxPlacementAttempts: 100
+    minColorDistance: 120.0
+    backgroundNoise: 6.0
+  voc:
+    root: data/VOCdevkit/VOC2007
+    classes: [aeroplane, car, dog]
+    imageSet: trainval
+    valFraction: 0.2
+    includeDifficult: false
+    maxImages: null
+
+model:
+  numBoxes: 2
+  convChannels: [16, 32, 64, 128]
+  hiddenSize: 512
+  dropout: 0.5
+  leakySlope: 0.1
+  outputActivation: sigmoid   # sigmoid | linear
+
+loss:
+  lambdaCoord: 5.0
+  lambdaNoobj: 0.5
+  useSqrtWidthHeight: true
+  confidenceTarget: iou       # iou | one
+  sqrtEpsilon: 1.0e-6
+
+training:
+  batchSize: 32
+  epochs: 30
+  learningRate: 0.001
+  weightDecay: 0.0
+  gradientClipNorm: null
