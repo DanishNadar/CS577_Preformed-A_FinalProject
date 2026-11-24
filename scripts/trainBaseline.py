@@ -1,9 +1,4 @@
-"""Train the baseline. Same arguments as `python -m src.training.train`.
-
-    python scripts/trainBaseline.py --config configs/baseline.yaml
-    python scripts/trainBaseline.py --set training.epochs=5 --set device=cuda
-    python scripts/trainBaseline.py --resume checkpoints/baseline/last.pt
-"""
+# Train the baseline; accepts the same arguments as python -m src.training.train
 
 import sys
 from pathlib import Path

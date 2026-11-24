@@ -1,14 +1,4 @@
-"""PASCAL VOC 2007 adapter restricted to three classes.
-
-Expected layout (the standard VOCtrainval_06-Nov-2007.tar extraction):
-  <root>/Annotations/*.xml
-  <root>/JPEGImages/*.jpg
-  <root>/ImageSets/Main/trainval.txt
-
-Images are stretched to imageSize x imageSize like YOLOv1's fixed-size input. Box coordinates
-are normalized by the original width/height, so a stretch resize leaves them unchanged.
-Objects from classes outside the selected three are ignored (they become background).
-"""
+# PASCAL VOC 2007 three-class adapter; expects <root>/Annotations, JPEGImages and ImageSets/Main/<imageSet>.txt
 
 from __future__ import annotations
 
@@ -38,7 +28,7 @@ class VocConfig:
 
 
 def parseVocAnnotation(xmlPath: Path, classNames: list[str], includeDifficult: bool) -> Tensor:
-    """Parse one XML file into (K, 5) normalized [classId, centerX, centerY, width, height]."""
+    # Parse one XML file into (K, 5) normalized [classId, centerX, centerY, width, height]
     root = ElementTree.parse(xmlPath).getroot()
     imageWidth = float(root.find("size/width").text)
     imageHeight = float(root.find("size/height").text)
@@ -65,7 +55,7 @@ def parseVocAnnotation(xmlPath: Path, classNames: list[str], includeDifficult: b
 
 
 def loadVocSplit(config: VocConfig, split: str, seed: int) -> tuple[list[str], list[Tensor]]:
-    """Deterministically split the image set into train/val, keeping images with a selected-class object."""
+    # Seeded train/val split of the image set, keeping only images with a selected-class object
     root = Path(config.root)
     imageSetPath = root / "ImageSets" / "Main" / f"{config.imageSet}.txt"
     if not imageSetPath.exists():
@@ -91,7 +81,7 @@ def loadVocSplit(config: VocConfig, split: str, seed: int) -> tuple[list[str], l
 
 
 class VocDetectionDataset(Dataset):
-    """Same item interface as SyntheticShapesDataset: (image, target, annotations)."""
+    # Same item interface as SyntheticShapesDataset: (image, target, annotations)
 
     def __init__(self, config: VocConfig, split: str, seed: int, imageSize: int = 112, gridSize: int = 7):
         if len(config.classes) < 1:

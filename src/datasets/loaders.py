@@ -1,4 +1,4 @@
-"""Dataset selection and DataLoader construction shared by training, smoke tests and evaluation."""
+# Dataset selection and DataLoader construction shared by training, smoke tests and evaluation
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ class DataConfig:
 
 
 def collateDetections(batch: list[tuple[Tensor, Tensor, Tensor]]) -> tuple[Tensor, Tensor, list[Tensor]]:
-    """Stack images/targets; keep variable-length annotations as a list."""
+    # Stack images and targets; annotations stay a list because object counts vary
     images, targets, annotations = zip(*batch)
     return torch.stack(images), torch.stack(targets), list(annotations)
 

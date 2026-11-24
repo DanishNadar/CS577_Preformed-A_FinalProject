@@ -1,4 +1,4 @@
-"""Turn raw model output into boxes, confidences and class scores."""
+# Turn raw model output into boxes, confidences and class scores
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ class DecodedPredictions:
 
 
 def splitPredictions(predictions: Tensor, numBoxes: int) -> tuple[Tensor, Tensor, Tensor]:
-    """Split (N, S, S, B*5 + C) into boxes (N, S, S, B, 4), confidence (N, S, S, B), classes (N, S, S, C)."""
+    # Split (N, S, S, B*5 + C) into boxes (N, S, S, B, 4), confidence (N, S, S, B), classes (N, S, S, C)
     batchSize, gridSize = predictions.shape[0], predictions.shape[1]
     boxValues = predictions[..., : numBoxes * 5].reshape(batchSize, gridSize, gridSize, numBoxes, 5)
     return boxValues[..., :4], boxValues[..., 4], predictions[..., numBoxes * 5 :]
@@ -44,10 +44,7 @@ def predictionsToDetections(
     scoreThreshold: float = 0.2,
     nmsIouThreshold: float = 0.5,
 ) -> list[Tensor]:
-    """Per-image detections, each a (K, 6) tensor [left, top, right, bottom, score, classId] in [0, 1] coords.
-
-    Each predicted box takes its best class-specific score; class-wise NMS follows.
-    """
+    # Per-image (K, 6) [left, top, right, bottom, score, classId] detections after best-class scoring and class-wise NMS
     decoded = decodePredictions(predictions.detach(), numBoxes)
     batchSize = predictions.shape[0]
     allBoxes = cxcywhToXyxy(decoded.imageBoxes).reshape(batchSize, -1, 4).clamp(0.0, 1.0)

@@ -1,10 +1,4 @@
-"""Training history stored as one row per epoch in history.json and history.csv.
-
-Row schema (keys are camelCase; extra metrics may be appended by extraMetricsFn):
-  epoch, learningRate, epochSeconds,
-  train<Component>, val<Component> for every component in LOSS_COMPONENTS,
-  e.g. trainTotal, valTotal, trainCoordinate, valNoObjectConfidence
-"""
+# Per-epoch history in history.json/history.csv: epoch, learningRate, epochSeconds, train<Component>, val<Component>
 
 from __future__ import annotations
 

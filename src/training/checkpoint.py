@@ -1,4 +1,4 @@
-"""Checkpoint save/load. Checkpoints are trusted local files written by train.py."""
+# Checkpoint save/load. Checkpoints are trusted local files written by train.py
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ def loadCheckpoint(path: str | Path, device: str | torch.device = "cpu") -> dict
 
 
 def loadModelFromCheckpoint(path: str | Path, device: str | torch.device = "cpu") -> tuple[YoloModel, dict]:
-    """Rebuild the model from the config stored in the checkpoint. Returns (model in eval mode, checkpoint)."""
+    # Rebuild the model from the checkpoint's stored config; returns (model in eval mode, checkpoint)
     checkpoint = loadCheckpoint(path, device)
     model = YoloModel(ModelConfig(**checkpoint["config"]["model"]))
     model.load_state_dict(checkpoint["modelState"])

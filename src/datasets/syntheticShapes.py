@@ -1,15 +1,4 @@
-"""Synthetic circles / squares / triangles detection dataset.
-
-ETL stages:
-  extract   generateSplit() renders images with exact boxes taken from each shape's drawn mask
-  transform annotations are normalized to cxcywh in [0, 1] and encoded into YOLO targets
-  load      writeSplit() stores PNGs + annotations.json; SyntheticShapesDataset serves tensors
-
-On disk:
-  <root>/manifest.json                generation parameters (used to detect stale data)
-  <root>/<split>/annotations.json     per-image objects plus split statistics
-  <root>/<split>/images/000000.png
-"""
+# Synthetic circle/square/triangle dataset: generated to <root>/<split>/{images, annotations.json} and served as tensors
 
 from __future__ import annotations
 
@@ -95,7 +84,7 @@ def boxesOverlap(boxA: tuple[int, ...], boxB: tuple[int, ...], margin: int = 1) 
 
 
 def sampleShape(rng: np.random.Generator, config: SyntheticConfig, imageSize: int) -> tuple[int, int, int, int, int]:
-    """Return classId, left, top, width, height for one candidate shape."""
+    # Sample classId, left, top, width, height for one candidate shape
     classId = int(rng.integers(0, len(CLASS_NAMES)))
     size = int(rng.integers(config.minObjectSize, config.maxObjectSize + 1))
     width = height = size
@@ -109,7 +98,7 @@ def sampleShape(rng: np.random.Generator, config: SyntheticConfig, imageSize: in
 def generateSample(
     rng: np.random.Generator, config: SyntheticConfig, imageSize: int, gridSize: int, stats: dict
 ) -> tuple[Image.Image, list[ShapeObject]]:
-    """Render one image. Shapes never overlap; same-cell centers are rejected and resampled if configured."""
+    # Render one image; overlapping shapes and same-cell centers are rejected and resampled
     background = rng.integers(0, 256, size=3)
     canvas = Image.new("RGB", (imageSize, imageSize), tuple(int(value) for value in background))
     requestedCount = int(rng.integers(config.minObjects, config.maxObjects + 1))
@@ -205,7 +194,7 @@ def generationManifest(config: SyntheticConfig, seed: int, imageSize: int, gridS
 def ensureSyntheticDataset(
     config: SyntheticConfig, seed: int, imageSize: int = 112, gridSize: int = 7, force: bool = False
 ) -> Path:
-    """Generate train/val splits under config.root unless an identical generation already exists."""
+    # Generate train/val splits unless manifest.json shows an identical generation already exists
     root = Path(config.root)
     manifestPath = root / "manifest.json"
     manifest = generationManifest(config, seed, imageSize, gridSize)
@@ -227,7 +216,7 @@ def readSplitAnnotations(splitDir: Path) -> dict:
 
 
 class SyntheticShapesDataset(Dataset):
-    """Returns (image (3, H, W) float in [0, 1], target (S, S, 5 + C), annotations (K, 5))."""
+    # Items are (image (3, H, W) in [0, 1], target (S, S, 5 + C), annotations (K, 5))
 
     classNames = CLASS_NAMES
 

@@ -92,7 +92,7 @@ def testRegeneratesWhenParametersChange(tinySyntheticConfig):
 
 
 def writeFakeVoc(root: Path) -> None:
-    """Minimal VOC2007-style tree: three images, one with only an unselected class."""
+    # Minimal VOC2007-style tree: three images, one with only an unselected class
     for folder in ("Annotations", "JPEGImages", "ImageSets/Main"):
         (root / folder).mkdir(parents=True)
     imageObjects = {

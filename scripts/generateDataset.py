@@ -1,8 +1,4 @@
-"""Generate the synthetic shapes dataset described by a config and print its statistics.
-
-    python scripts/generateDataset.py --config configs/baseline.yaml
-    python scripts/generateDataset.py --set data.synthetic.numTrain=200 --set data.synthetic.root=data/syntheticSmall --force
-"""
+# Generate the synthetic dataset from a config and print split stats: python scripts/generateDataset.py [--set key=value] [--force]
 
 import argparse
 import json
@@ -16,7 +12,7 @@ from src.utils.config import loadExperimentConfig, parseOverrideValue  # noqa: E
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(description="Generate the synthetic shapes dataset and print its statistics")
     parser.add_argument("--config", default="configs/baseline.yaml")
     parser.add_argument("--set", dest="overrides", action="append", default=[], metavar="KEY=VALUE")
     parser.add_argument("--force", action="store_true", help="regenerate even if the manifest matches")

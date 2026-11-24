@@ -1,14 +1,4 @@
-"""Simplified YOLOv1-style detector for 112x112 inputs.
-
-Output tensor layout, shape (N, S, S, B*5 + C) = (N, 7, 7, 13) by default:
-
-    index  0..4   box 0: x, y, w, h, confidence
-    index  5..9   box 1: x, y, w, h, confidence
-    index 10..12  class scores for the cell (one vector per cell, shared by both boxes)
-
-x, y are offsets of the box center inside its grid cell (0..1); w, h are relative to the
-full image. Dimension 1 indexes grid rows (y) and dimension 2 grid columns (x).
-"""
+# YOLOv1-style detector: (N, 3, 112, 112) -> (N, 7, 7, 13) = 2 x [x, y, w, h, conf] + 3 class scores per cell
 
 from __future__ import annotations
 
@@ -32,8 +22,7 @@ class ModelConfig:
     hiddenSize: int = 512
     dropout: float = 0.5
     leakySlope: float = 0.1
-    # "sigmoid": sigmoid on box/confidence values, softmax on class scores (our default)
-    # "linear":  raw outputs, as in the paper's final layer
+    # "sigmoid" squashes box/confidence values and softmaxes class scores; "linear" keeps raw outputs like the paper
     outputActivation: str = "sigmoid"
 
     @property
@@ -81,7 +70,7 @@ class YoloModel(nn.Module):
             raise ValueError(f"outputActivation must be one of {OUTPUT_ACTIVATIONS}")
 
     def rawPredictions(self, images: Tensor) -> Tensor:
-        """Head output before any activation, shape (N, S, S, B*5 + C)."""
+        # Head output before activation, shape (N, S, S, B*5 + C)
         cfg = self.config
         featureMap = self.features(images)  # (N, convChannels[-1], S, S)
         return self.head(featureMap).view(-1, cfg.gridSize, cfg.gridSize, cfg.predictionDepth)
@@ -95,12 +84,12 @@ class YoloModel(nn.Module):
         return torch.cat((boxValues, classProbabilities), dim=-1)
 
     def forward(self, images: Tensor) -> Tensor:
-        """images (N, 3, H, W) in [0, 1] -> predictions (N, S, S, B*5 + C)."""
+        # images (N, 3, H, W) in [0, 1] -> predictions (N, S, S, B*5 + C)
         return self.activatePredictions(self.rawPredictions(images))
 
 
 def createModel(config: ModelConfig | None = None, seed: int | None = None) -> YoloModel:
-    """Build a model; passing a seed makes the weight initialization reproducible."""
+    # Passing a seed makes the weight initialization reproducible
     if seed is not None:
         torch.manual_seed(seed)
     return YoloModel(config)

@@ -1,10 +1,4 @@
-"""Baseline YOLOv1 training loop.
-
-Usage:
-    python -m src.training.train --config configs/baseline.yaml
-    python -m src.training.train --config configs/baseline.yaml --set training.epochs=5 --set device=cpu
-    python -m src.training.train --config configs/baseline.yaml --resume checkpoints/baseline/last.pt
-"""
+# Baseline training: python -m src.training.train --config configs/baseline.yaml [--set key=value] [--resume path]
 
 from __future__ import annotations
 
@@ -49,7 +43,7 @@ def runEpoch(
     optimizer: torch.optim.Optimizer | None = None,
     gradientClipNorm: float | None = None,
 ) -> dict[str, float]:
-    """One pass over dataLoader. Trains when an optimizer is given, otherwise evaluates without gradients."""
+    # Trains when an optimizer is given, otherwise evaluates without gradients
     isTraining = optimizer is not None
     model.train(isTraining)
     componentSums: dict[str, float] = {}
@@ -81,7 +75,7 @@ def train(
     extraMetricsFn: ExtraMetricsFn | None = None,
     verbose: bool = True,
 ) -> TrainingResult:
-    """Train from scratch (or resume) using config. lossFn overrides the default YoloLoss(config.loss)."""
+    # Train from scratch or resume; lossFn overrides the default YoloLoss(config.loss)
     seedEverything(config.seed)
     device = resolveDevice(config.device)
     trainingConfig = config.training

@@ -1,4 +1,4 @@
-"""Experiment configuration: YAML file -> nested dataclasses, with dotted command-line overrides."""
+# Experiment configuration: YAML file -> nested dataclasses, with dotted command-line overrides
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ class ExperimentConfig:
 
 
 def dataclassFromDict(cls: type, values: dict):
-    """Build a (possibly nested) dataclass, rejecting keys it does not define."""
+    # Build a (possibly nested) dataclass, rejecting keys it does not define
     fieldNames = {f.name for f in fields(cls)}
     unknownKeys = set(values) - fieldNames
     if unknownKeys:
@@ -57,7 +57,7 @@ def setDottedValue(values: dict, dottedKey: str, value) -> None:
 
 
 def loadExperimentConfig(path: str | Path | None = None, overrides: dict | None = None) -> ExperimentConfig:
-    """Overrides use dotted keys, e.g. {"training.epochs": 2, "data.dataset": "voc"}."""
+    # Overrides use dotted keys, e.g. {"training.epochs": 2}
     values = yaml.safe_load(Path(path).read_text()) if path else {}
     values = values or {}
     for dottedKey, value in (overrides or {}).items():
@@ -68,7 +68,7 @@ def loadExperimentConfig(path: str | Path | None = None, overrides: dict | None 
 
 
 def syncSharedDimensions(config: ExperimentConfig) -> None:
-    """Image size, grid size and class count are defined by the data section and copied into the model."""
+    # Image size, grid size and class count come from the data section and are copied into the model
     config.model.imageSize = config.data.imageSize
     config.model.gridSize = config.data.gridSize
     config.model.numClasses = numClassesFor(config.data)
@@ -80,5 +80,5 @@ def configToDict(config: ExperimentConfig) -> dict:
 
 
 def parseOverrideValue(text: str):
-    """Interpret command-line override text with YAML rules (numbers, booleans, lists, null)."""
+    # Interpret command-line override text with YAML rules (numbers, booleans, lists, null)
     return yaml.safe_load(text)

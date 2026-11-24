@@ -16,13 +16,13 @@ from src.models.yoloModel import ModelConfig, createModel
 
 
 def singleObjectTarget(box=(0.5, 0.5, 0.4, 0.2), classId=1) -> torch.Tensor:
-    """Batch of one target with a single object centered in cell (3, 3)."""
+    # Batch of one target with a single object centered in cell (3, 3)
     target, _ = encodeTarget(torch.tensor([[classId, *box]]), 7, 3)
     return target.unsqueeze(0)
 
 
 def predictionWithBoxes(firstBox, secondBox, confidences=(0.0, 0.0), classProbabilities=(0.0, 1.0, 0.0)):
-    """Prediction tensor (1, 7, 7, 13), zero everywhere except cell (3, 3)."""
+    # Prediction tensor (1, 7, 7, 13), zero everywhere except cell (3, 3)
     predictions = torch.zeros(1, 7, 7, 13)
     predictions[0, 3, 3] = torch.tensor(
         [*firstBox, confidences[0], *secondBox, confidences[1], *classProbabilities]

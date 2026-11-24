@@ -1,4 +1,4 @@
-"""Batch inference helpers for evaluation code."""
+# Batch inference helpers for evaluation code
 
 from __future__ import annotations
 

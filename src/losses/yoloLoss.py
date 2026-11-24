@@ -1,19 +1,4 @@
-"""Reference YOLOv1 loss (Redmon et al., 2016, eq. 3).
-
-    L = lambdaCoord * sum_ij 1obj_ij [(x - x^)^2 + (y - y^)^2]
-      + lambdaCoord * sum_ij 1obj_ij [(sqrt w - sqrt w^)^2 + (sqrt h - sqrt h^)^2]
-      +               sum_ij 1obj_ij (C - C^)^2
-      + lambdaNoobj * sum_ij 1noobj_ij (C - C^)^2
-      +               sum_i  1obj_i  sum_c (p(c) - p^(c))^2
-
-1obj_ij marks predictor j in cell i as responsible: the cell contains an object center and
-predictor j has the highest IoU with that object. 1noobj_ij is its complement, so the
-non-responsible predictor in an occupied cell is pushed toward zero confidence too, as in the paper.
-The confidence target for a responsible predictor is IoU(prediction, truth) by default.
-
-Each term is a standalone function so it can be inspected, differentiated or replaced on its own.
-The total is summed over cells and predictors and divided by the batch size.
-"""
+# Reference YOLOv1 loss (Redmon et al., 2016, eq. 3) with each term as a separate function
 
 from __future__ import annotations
 
@@ -41,22 +26,14 @@ class YoloLossConfig:
 
 
 def safeSqrt(values: Tensor, eps: float = 1e-6) -> Tensor:
-    """sign(v) * sqrt(|v| + eps): finite value and gradient even for zero or negative widths."""
+    # sign(v) * sqrt(|v| + eps) keeps values and gradients finite for zero or negative widths
     return torch.sign(values) * torch.sqrt(values.abs() + eps)
 
 
 def assignResponsibleBoxes(
     predictedBoxes: Tensor, targetBoxes: Tensor, objectMask: Tensor
 ) -> tuple[Tensor, Tensor]:
-    """Pick the responsible predictor in every occupied cell.
-
-    predictedBoxes (N, S, S, B, 4) and targetBoxes (N, S, S, 4) are cell-relative.
-    Returns responsibleMask (N, S, S, B) in {0, 1} and boxIous (N, S, S, B).
-
-    Runs under no_grad: argmax is not differentiable, and the paper treats the IoU confidence
-    target as a constant, so no gradient should flow through either.
-    Ties (e.g. both IoUs are 0 early in training) go to the lower predictor index.
-    """
+    # Highest-IoU predictor per occupied cell; no_grad because argmax and the IoU confidence target are constants
     gridSize = predictedBoxes.shape[1]
     numBoxes = predictedBoxes.shape[3]
     with torch.no_grad():
@@ -98,12 +75,7 @@ def classificationLoss(predictedClasses: Tensor, targetClasses: Tensor, objectMa
 
 
 class YoloLoss(nn.Module):
-    """predictions (N, S, S, B*5 + C), targets (N, S, S, 5 + C) -> dict of scalar loss tensors.
-
-    Returned keys: coordinate (= coordinateXy + coordinateWh), coordinateXy, coordinateWh,
-    objectConfidence, noObjectConfidence, classification, total. Every value already includes
-    its lambda weight and the 1/N batch normalization, so the weighted parts add up to total.
-    """
+    # Returns weighted, batch-averaged loss components that sum to 'total'
 
     def __init__(self, config: YoloLossConfig | None = None, numBoxes: int = 2):
         super().__init__()

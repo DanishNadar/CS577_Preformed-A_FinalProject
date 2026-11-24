@@ -1,11 +1,4 @@
-"""Bounding-box conversions and IoU.
-
-Conventions used across the project:
-  - cxcywh: (centerX, centerY, width, height), normalized to [0, 1] by the image size
-  - xyxy:   (left, top, right, bottom), normalized to [0, 1] by the image size
-  - cell-relative: (x, y, w, h) where x, y are offsets in [0, 1] inside a grid cell
-    and w, h are still image-relative (classic YOLOv1 parameterization)
-"""
+# Box conversions, IoU and NMS; cxcywh and xyxy boxes are normalized to [0, 1] by image size
 
 from __future__ import annotations
 
@@ -26,7 +19,7 @@ def xyxyToCxcywh(boxes: Tensor) -> Tensor:
 
 
 def boxIou(boxesA: Tensor, boxesB: Tensor, eps: float = 1e-9) -> Tensor:
-    """Elementwise IoU of broadcastable xyxy boxes with shape (..., 4)."""
+    # Elementwise IoU of broadcastable xyxy boxes with shape (..., 4)
     left = torch.maximum(boxesA[..., 0], boxesB[..., 0])
     top = torch.maximum(boxesA[..., 1], boxesB[..., 1])
     right = torch.minimum(boxesA[..., 2], boxesB[..., 2])
@@ -41,15 +34,12 @@ def boxIou(boxesA: Tensor, boxesB: Tensor, eps: float = 1e-9) -> Tensor:
 
 
 def pairwiseIou(boxesA: Tensor, boxesB: Tensor) -> Tensor:
-    """IoU matrix (M, K) between xyxy boxes (M, 4) and (K, 4)."""
+    # IoU matrix (M, K) between xyxy boxes (M, 4) and (K, 4)
     return boxIou(boxesA[:, None, :], boxesB[None, :, :])
 
 
 def cellToImageBoxes(cellBoxes: Tensor, gridSize: int) -> Tensor:
-    """Convert cell-relative boxes (N, S, S, ..., 4) to image-relative cxcywh boxes.
-
-    Dimension 1 is the grid row (y) and dimension 2 is the grid column (x).
-    """
+    # Cell-relative boxes (N, S, S, ..., 4) to image-relative cxcywh; dim 1 is the grid row, dim 2 the column
     extraDims = cellBoxes.dim() - 4
     gridIndex = torch.arange(gridSize, device=cellBoxes.device, dtype=cellBoxes.dtype)
     columnOffset = gridIndex.view(1, 1, gridSize, *([1] * extraDims))
@@ -60,7 +50,7 @@ def cellToImageBoxes(cellBoxes: Tensor, gridSize: int) -> Tensor:
 
 
 def nonMaxSuppression(boxes: Tensor, scores: Tensor, iouThreshold: float) -> Tensor:
-    """Greedy NMS on xyxy boxes (K, 4). Returns kept indices sorted by descending score."""
+    # Greedy NMS on xyxy boxes (K, 4). Returns kept indices sorted by descending score
     order = scores.argsort(descending=True)
     keptIndices = []
     while order.numel() > 0:

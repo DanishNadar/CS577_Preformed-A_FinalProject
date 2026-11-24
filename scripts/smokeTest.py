@@ -1,8 +1,4 @@
-"""End-to-end CPU smoke test (well under a minute): tiny synthetic data -> train 2 epochs ->
-reload checkpoint -> decode predictions -> read logs. Everything is written to a temporary folder.
-
-    python scripts/smokeTest.py
-"""
+# End-to-end CPU smoke test: tiny synthetic data, 2 epochs, checkpoint reload, decoding and log checks
 
 import math
 import sys
