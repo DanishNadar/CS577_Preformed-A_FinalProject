@@ -13,7 +13,47 @@ We test that claim with a small PyTorch YOLOv1-style detector, a reference imple
 
 > Joseph Redmon, Santosh Divvala, Ross Girshick, Ali Farhadi. *You Only Look Once: Unified, Real-Time Object Detection.* CVPR 2016. https://arxiv.org/abs/1506.02640
 
-This repository currently holds the baseline (model, data ETL, reference loss, training) and the interfaces the ablation, evaluation and verification work builds on.
+This repository currently holds Danish Nadar's baseline (YOLO model, data ETL, reference loss, training) and the interfaces the ablation, evaluation and verification work builds on.
+
+## Contributions
+
+| Member | Responsibility | Status |
+|---|---|---|
+| **Danish Nadar** | Initial YOLO model, dataset ETL pipeline, baseline training infrastructure | **Complete** (see below) |
+| Omar Ashurbayov | Loss-function ablations and experiments | Not started; interfaces ready |
+| Abdul Mueed Mohammed | Evaluation and experimental analysis | Not started; interfaces ready |
+| Muhammad Ahmad Hasan | Mathematical verification and research | Not started; interfaces ready |
+
+### Danish Nadar — implemented components
+
+Danish designed and implemented the baseline that the rest of the project builds on:
+
+- **YOLOv1-inspired model** ([src/models/yoloModel.py](src/models/yoloModel.py)):
+  - Four conv/LeakyReLU/max-pool blocks and two fully connected layers map 112×112 images to a `(N, 7, 7, 13)` output.
+  - Uses the classic YOLOv1 parameterization: cell-relative x/y, image-relative w/h, two boxes per cell and one class vector per cell.
+  - Grid size, boxes and classes are configurable, initialization is seeded, and it runs on CPU or GPU.
+- **Dataset ETL pipeline**:
+  - [Synthetic shapes generator](src/datasets/syntheticShapes.py): 2,000 train / 500 val images, seeded, with exact boxes taken from the rendered pixels. Collision and rejection statistics are recorded.
+  - [YOLO target encoder](src/datasets/targetEncoder.py): assigns each object to its responsible grid cell. When two objects share a cell, it deterministically keeps one and counts the drop.
+  - [PASCAL VOC 2007 three-class adapter](src/datasets/vocDataset.py).
+  - [DataLoaders and dataset selection](src/datasets/loaders.py).
+- **Reference YOLOv1 loss** ([src/losses/yoloLoss.py](src/losses/yoloLoss.py)):
+  - The paper's loss with `lambdaCoord = 5`, `lambdaNoobj = 0.5`, square-root width/height, highest-IoU responsibility assignment and IoU confidence targets.
+  - Every term is a separate function, and the loss returns a breakdown of all components.
+- **Baseline training infrastructure**:
+  - [Training loop and CLI](src/training/train.py).
+  - [Checkpoint save/load/resume](src/training/checkpoint.py).
+  - [JSON/CSV training history](src/training/history.py).
+  - [YAML configuration](configs/baseline.yaml) with command-line overrides.
+  - [Reproducibility utilities](src/utils/reproducibility.py).
+- **Shared interfaces for teammates**:
+  - [Prediction decoding and NMS](src/utils/decoding.py).
+  - [Box utilities](src/utils/boxes.py).
+  - [Batch inference](src/training/inference.py).
+  - The `lossFn` and `extraMetricsFn` hooks in `train()`.
+- **Testing and verification**:
+  - 52 pytest tests in [tests/](tests/) and the [end-to-end smoke test](scripts/smokeTest.py).
+  - The full 30-epoch baseline training run reported under [Baseline results](#baseline-results).
 
 ## Installation
 
@@ -237,7 +277,7 @@ History row schema: `epoch`, `learningRate`, `epochSeconds`, then `train<Compone
 
 ## Baseline results
 
-These numbers come from one full run: default config, seed 577, synthetic data with 2,000 train and 500 val images, 30 epochs, CPU only (no GPU). Command:
+Danish Nadar trained this baseline once with the default config, seed 577, synthetic data with 2,000 train and 500 val images, 30 epochs, CPU only (no GPU). Command:
 
 ```bash
 python scripts/trainBaseline.py --config configs/baseline.yaml --set device=cpu
@@ -272,7 +312,7 @@ The following were measured on the val split with the epoch-30 checkpoint, using
 
 ## Team Integration Guide
 
-You should be able to build on the baseline by importing these interfaces, without editing them. If a change does turn out to be needed, discuss it first, because the baseline checkpoints and tests depend on it.
+This guide is for Omar, Abdul and Mohammad. You should be able to build on Danish's baseline by importing these interfaces, without editing them. If a change does turn out to be needed, discuss it first, because the baseline checkpoints and tests depend on it.
 
 ### Omar — loss ablations
 
