@@ -20,7 +20,7 @@ This repository currently holds Danish Nadar's baseline (YOLO model, data ETL, r
 | Member | Responsibility | Status |
 |---|---|---|
 | **Danish Nadar** | Initial YOLO model, dataset ETL pipeline, baseline training infrastructure | **Complete** (see below) |
-| Omar Ashurbayov | Loss-function ablations and experiments | Not started; interfaces ready |
+| **Omar Ashurbayov** | Loss-function ablations and experiments | **Complete** (see [docs/lossAblations.md](docs/lossAblations.md)) |
 | Abdul Mueed Mohammed | Evaluation and experimental analysis | Not started; interfaces ready |
 | Muhammad Ahmad Hasan | Mathematical verification and research | Not started; interfaces ready |
 
@@ -54,6 +54,28 @@ Danish designed and implemented the baseline that the rest of the project builds
 - **Testing and verification**:
   - 52 pytest tests in [tests/](tests/) and the [end-to-end smoke test](scripts/smokeTest.py).
   - The full 30-epoch baseline training run reported under [Baseline results](#baseline-results).
+
+### Omar Ashurbayov — loss ablations
+
+Full write-up, figures and tables: [docs/lossAblations.md](docs/lossAblations.md).
+
+- **Variants** ([src/ablations/variants.py](src/ablations/variants.py)): the paper loss, the two proposal ablations (`unitWeights`: both λ set to 1; `directWh`: no square root), and three variants that change one choice at a time (`unitCoord`, `unitNoobj`, `unitWeightsDirectWh`). Runs with the same seed are checked to differ only in `loss.*`.
+- **Metrics** ([src/ablations/metrics.py](src/ablations/metrics.py)), recorded every epoch through `extraMetricsFn`:
+  - responsible-box mean IoU, overall and for small, medium and large objects
+  - recall and precision at IoU 0.5 after NMS
+  - validation loss under the paper's weights, comparable across variants
+  - gradient norm of each loss term on a fixed batch
+  - training gradient norm at every optimizer step
+- **Runner and analysis** ([src/ablations/runAblations.py](src/ablations/runAblations.py), [src/ablations/analysis.py](src/ablations/analysis.py)): trains several (variant × seed) runs in parallel and skips finished ones. The analysis writes tables with mean ± std over seeds, differences from the paper loss paired by seed, and figures. The baseline code is unchanged.
+- **Results** (6 variants × 3 seeds × 30 epochs):
+  - **Both weights set to 1:** training collapses on all 3 seeds (mean IoU 0.22 vs 0.56). A gradient spike saturates the head early, and neither weight change alone does this.
+  - **No square root on w, h:** no worse than the paper loss (IoU 0.575 vs 0.559, small objects tied), and more stable across seeds.
+- **Tests:** 12 tests in [tests/testAblations.py](tests/testAblations.py).
+
+```bash
+python scripts/runAblations.py --seeds 577 1 2 --jobs 6 --threads 2 --set device=cpu
+python scripts/analyzeAblations.py --figureDir docs/figures/lossAblations
+```
 
 ## Installation
 
@@ -103,7 +125,9 @@ src/utils/boxes.py             box conversions, IoU, NMS
 src/utils/decoding.py          raw output -> boxes, confidences, class scores, detections
 src/utils/config.py            YAML -> dataclasses, overrides
 src/utils/reproducibility.py   seeding, device selection, RNG state capture
-scripts/                       generateDataset.py, trainBaseline.py, smokeTest.py
+src/ablations/                 loss-ablation variants, metrics, runner, analysis
+scripts/                       generateDataset.py, trainBaseline.py, smokeTest.py, runAblations.py, analyzeAblations.py
+docs/                          loss-ablation write-up, figures and result tables
 tests/                         pytest suite
 data/ checkpoints/ results/    generated artifacts (git-ignored)
 ```

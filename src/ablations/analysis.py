@@ -240,15 +240,17 @@ def plotFigures(runs: list[dict], aggregateRows: list[dict], figureDir: Path) ->
         figure, axes = plt.subplots(figsize=(7.5, 4.2), dpi=150)
         for variant in variants:
             color, lineStyle = VARIANT_STYLES[variant]
-            epochs, means, stds = epochSeries(runs, variant, key)
+            # Thin line per seed: some variants collapse on some seeds only, which a std band would hide
+            for run in (run for run in runs if run["variant"] == variant):
+                axes.plot([row["epoch"] for row in run["history"]], [row[key] for row in run["history"]],
+                          color=color, linewidth=0.8, alpha=0.35)
+            epochs, means, _ = epochSeries(runs, variant, key)
             axes.plot(epochs, means, color=color, linestyle=lineStyle, linewidth=2, label=variant)
-            axes.fill_between(epochs, [m - s for m, s in zip(means, stds)], [m + s for m, s in zip(means, stds)],
-                              color=color, alpha=0.12, linewidth=0)
         if logScale:
             axes.set_yscale("log")
         styleAxes(axes, title, ylabel)
         axes.legend(frameon=False, fontsize=8, ncol=3, loc="best", labelcolor=TEXT_PRIMARY)
-        figure.text(0.01, 0.01, "Line: mean over seeds. Band: ±1 std.", fontsize=7, color=TEXT_SECONDARY)
+        figure.text(0.01, 0.01, "Bold: mean over seeds. Thin: individual seeds.", fontsize=7, color=TEXT_SECONDARY)
         figure.tight_layout(rect=(0, 0.03, 1, 1))
         figure.savefig(figureDir / fileName)
         plt.close(figure)
