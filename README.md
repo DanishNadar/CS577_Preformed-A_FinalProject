@@ -21,7 +21,7 @@ This repository currently holds Danish Nadar's baseline (YOLO model, data ETL, r
 |---|---|---|
 | **Danish Nadar** | Initial YOLO model, dataset ETL pipeline, baseline training infrastructure | **Complete** (see below) |
 | **Omar Ashurbayov** | Loss-function ablations and experiments | **Complete** (see [docs/lossAblations.md](docs/lossAblations.md)) |
-| Abdul Mueed Mohammed | Evaluation and experimental analysis | Not started; interfaces ready |
+| **Abdul Mueed Mohammed** | Evaluation and experimental analysis | **Complete** (see [docs/evaluation.md](docs/evaluation.md)) |
 | Muhammad Ahmad Hasan | Mathematical verification and research | Not started; interfaces ready |
 
 ### Danish Nadar — implemented components
@@ -77,6 +77,29 @@ python scripts/runAblations.py --seeds 577 1 2 --jobs 6 --threads 2 --set device
 python scripts/analyzeAblations.py --figureDir docs/figures/lossAblations
 ```
 
+### Abdul Mueed Mohammed — evaluation and analysis
+
+Full write-up, figures and tables: [docs/evaluation.md](docs/evaluation.md).
+
+- **Detection metrics** ([src/evaluation/detectionMetrics.py](src/evaluation/detectionMetrics.py)):
+  - PASCAL VOC average precision, per class and as mAP at IoU 0.5 and 0.75, plus COCO-style mAP@[.5:.95]
+  - precision-recall curves
+  - a per-object error breakdown (correct / localization / classification / missed) by object size
+- **Checkpoint evaluation** ([src/evaluation/evaluate.py](src/evaluation/evaluate.py), [figures](src/evaluation/figures.py)):
+  - evaluates one checkpoint, or every ablation run
+  - writes mean ± std tables, differences from the paper loss paired by seed, and figures, including example detections
+- **Reproduction check:** all 18 ablation runs were retrained on a second machine and match Omar's committed results exactly, apart from floating-point rounding.
+- **Results:**
+  - **mAP@0.5:** `paper` 0.380, `unitWeights` 0.011, `directWh` 0.493.
+  - **Most misses at the 0.2 score threshold are low-confidence correct boxes, not bad boxes.**
+  - **Small objects (< 24 px) fail under every loss,** and the square root does not help them.
+- **Tests:** 7 tests in [tests/testEvaluation.py](tests/testEvaluation.py).
+
+```bash
+python scripts/evaluateCheckpoints.py --ablations --figureDir docs/figures/evaluation   # after runAblations
+python scripts/evaluateCheckpoints.py --checkpoint checkpoints/baseline/last.pt         # any single checkpoint
+```
+
 ## Installation
 
 Python 3.10+ is required. Run every command from the repository root.
@@ -126,8 +149,9 @@ src/utils/decoding.py          raw output -> boxes, confidences, class scores, d
 src/utils/config.py            YAML -> dataclasses, overrides
 src/utils/reproducibility.py   seeding, device selection, RNG state capture
 src/ablations/                 loss-ablation variants, metrics, runner, analysis
-scripts/                       generateDataset.py, trainBaseline.py, smokeTest.py, runAblations.py, analyzeAblations.py
-docs/                          loss-ablation write-up, figures and result tables
+src/evaluation/                mAP, PR curves, error breakdown, checkpoint evaluation, figures
+scripts/                       generateDataset.py, trainBaseline.py, smokeTest.py, runAblations.py, analyzeAblations.py, evaluateCheckpoints.py
+docs/                          loss-ablation and evaluation write-ups, figures and result tables
 tests/                         pytest suite
 data/ checkpoints/ results/    generated artifacts (git-ignored)
 ```
@@ -295,7 +319,7 @@ History row schema: `epoch`, `learningRate`, `epochSeconds`, then `train<Compone
 - The synthetic task is far easier than VOC. Conclusions about the loss on shapes may not carry over to natural images.
 - The no-overlap rule rejects large shapes more often when they are placed second or third. As a result, images with several objects tend to contain smaller ones.
 - Collision avoidance hides YOLOv1's same-cell weakness on synthetic data. On VOC the encoder keeps the largest object per cell and drops the rest.
-- Detection mAP is not implemented here (Abdul's area). `predictionsToDetections` provides thresholded, NMS-filtered boxes to build on.
+- Detection mAP is implemented in `src/evaluation/` (see [docs/evaluation.md](docs/evaluation.md)).
 - The VOC adapter is tested on a fake directory tree, not yet on the real download.
 - The GPU code path is supported, but only CPU was available during development, so the CUDA test was skipped.
 
